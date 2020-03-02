@@ -100,6 +100,11 @@ private:
 
 	void declareAssign(IRVariable const& _var, IRVariable const& _value, bool _define);
 
+	/// Allocates memory if necessary, for example for
+	/// static arrays,
+	/// and declares the variable.
+	void allocateMemoryAndDeclareVariable(VariableDeclaration const& _var);
+
 	void appendAndOrOperatorCode(BinaryOperation const& _binOp);
 	void appendSimpleUnaryOperation(UnaryOperation const& _operation, Expression const& _expr);
 

@@ -179,7 +179,7 @@ void IRGeneratorForStatements::endVisit(VariableDeclarationStatement const& _var
 	else
 		for (auto const& decl: _varDeclStatement.declarations())
 			if (decl)
-				declare(m_context.addLocalVariable(*decl));
+				allocateMemoryAndDeclareVariable(*decl);
 }
 
 bool IRGeneratorForStatements::visit(Conditional const& _conditional)
@@ -1436,6 +1436,12 @@ std::ostream& IRGeneratorForStatements::define(IRVariable const& _var)
 	return m_code;
 }
 
+void IRGeneratorForStatements::declare(IRVariable const& _var)
+{
+	if (_var.type().sizeOnStack() > 0)
+		m_code << "let " << _var.commaSeparatedList() << "\n";
+}
+
 void IRGeneratorForStatements::declareAssign(IRVariable const& _lhs, IRVariable const& _rhs, bool _declare)
 {
 	string output;
@@ -1455,10 +1461,20 @@ void IRGeneratorForStatements::declareAssign(IRVariable const& _lhs, IRVariable 
 			_rhs.commaSeparatedList() <<
 			")\n";
 }
-void IRGeneratorForStatements::declare(IRVariable const& _var)
+
+void IRGeneratorForStatements::allocateMemoryAndDeclareVariable(VariableDeclaration const& _var)
 {
-	if (_var.type().sizeOnStack() > 0)
-		m_code << "let " << _var.commaSeparatedList() << "\n";
+	IRVariable const& irVar = m_context.addLocalVariable(_var);
+
+	if (_var.type()->dataStoredIn(DataLocation::Memory))
+		if (auto const* arrayType = dynamic_cast<ArrayType const*>(_var.type()))
+			if (!arrayType->isDynamicallySized())
+			{
+				m_code << "let " << irVar.part("mpos").name() << " := " << m_utils.allocateMemoryArrayFunction(*arrayType) << "(" << arrayType->length() << ")\n";
+				return;
+			}
+
+	declare(irVar);
 }
 
 void IRGeneratorForStatements::appendSimpleUnaryOperation(UnaryOperation const& _operation, Expression const& _expr)

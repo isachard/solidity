@@ -37,6 +37,7 @@ class Type;
 class ArrayType;
 class MappingType;
 class IntegerType;
+class StructType;
 
 /**
  * Component that can generate various useful Yul functions.
@@ -250,10 +251,24 @@ public:
 	/// Return value: pointer
 	std::string allocationFunction();
 
-	/// @returns the name of a function that allocates a memory array.
+	/// @returns the name of a function that zeroes an array
+	/// where the base has simple zero value in memory.
+	/// signature: (headPointer, allocatedSize) ->
+	std::string zeroSimpleMemoryArrayFunction(ArrayType const& _type);
+
+	/// @returns the name of a function that zeroes an array
+	/// where the base does not have simple zero value in memory.
+	/// signature: (headPointer, allocatedSize) ->
+	std::string zeroComplexMemoryArrayFunction(ArrayType const& _type);
+
+	/// @returns the name of a function that allocates and zeroes a memory array.
 	/// For dynamic arrays it adds space for length and stores it.
 	/// signature: (length) -> memPtr
 	std::string allocateMemoryArrayFunction(ArrayType const& _type);
+
+	/// @returns the name of a function that allocates and zeroes a memory struct.
+	/// signature: (members) -> memPtr
+	std::string allocateMemoryStructFunction(StructType const& _type);
 
 	/// @returns the name of the function that converts a value of type @a _from
 	/// to a value of type @a _to. The resulting vale is guaranteed to be in range
