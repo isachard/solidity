@@ -208,6 +208,8 @@ struct ExpressionAnnotation: ASTAnnotation
 	bool isLValue = false;
 	/// Whether the expression is used in a context where the LValue is actually required.
 	bool lValueRequested = false;
+	/// Whether the expression is an ordinary assignment (e.g. false for +=, ++, --, .., but true for +=, =, -=, ..)
+	bool ordinaryLAssignment = true;
 
 	/// Types and - if given - names of arguments if the expr. is a function
 	/// that is called, used for overload resoultion

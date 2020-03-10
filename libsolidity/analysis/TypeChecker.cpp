@@ -1345,7 +1345,7 @@ void TypeChecker::checkExpressionAssignment(Type const& _type, Expression const&
 
 bool TypeChecker::visit(Assignment const& _assignment)
 {
-	requireLValue(_assignment.leftHandSide());
+	requireLValue(_assignment.leftHandSide(), false);
 	TypePointer t = type(_assignment.leftHandSide());
 	_assignment.annotation().type = t;
 
@@ -1403,7 +1403,7 @@ bool TypeChecker::visit(TupleExpression const& _tuple)
 		for (auto const& component: components)
 			if (component)
 			{
-				requireLValue(*component);
+				requireLValue(*component, false);
 				types.push_back(type(*component));
 			}
 			else
@@ -1488,7 +1488,7 @@ bool TypeChecker::visit(UnaryOperation const& _operation)
 	Token op = _operation.getOperator();
 	bool const modifying = (op == Token::Inc || op == Token::Dec || op == Token::Delete);
 	if (modifying)
-		requireLValue(_operation.subExpression());
+		requireLValue(_operation.subExpression(), true);
 	else
 		_operation.subExpression().accept(*this);
 	TypePointer const& subExprType = type(_operation.subExpression());
@@ -2996,9 +2996,10 @@ bool TypeChecker::expectType(Expression const& _expression, Type const& _expecte
 	return true;
 }
 
-void TypeChecker::requireLValue(Expression const& _expression)
+void TypeChecker::requireLValue(Expression const& _expression, bool _valueIsRead)
 {
 	_expression.annotation().lValueRequested = true;
+	_expression.annotation().ordinaryLAssignment = !_valueIsRead;
 	_expression.accept(*this);
 
 	if (_expression.annotation().isLValue)

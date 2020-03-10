@@ -5,6 +5,7 @@ Language Features:
 
 Compiler Features:
  * Metadata: Added support for IPFS hashes of large files that need to be split in multiple chunks.
+ * Immutable State Vars: Proper validation of initialization and reading during construction time.
 
 
 Bugfixes:
