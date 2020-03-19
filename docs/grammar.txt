@@ -16,7 +16,7 @@ ContractPart = StateVariableDeclaration | UsingForDeclaration
 
 InheritanceSpecifier = UserDefinedTypeName ( '(' Expression ( ',' Expression )* ')' )?
 
-StateVariableDeclaration = TypeName ( 'public' | 'internal' | 'private' | 'constant' | OverrideSpecifier )* Identifier ('=' Expression)? ';'
+StateVariableDeclaration = TypeName ( 'public' | 'internal' | 'private' | 'constant' | 'immutable' | OverrideSpecifier )* Identifier ('=' Expression)? ';'
 UsingForDeclaration = 'using' Identifier 'for' ('*' | TypeName) ';'
 StructDefinition = 'struct' Identifier '{'
                      ( VariableDeclaration ';' (VariableDeclaration ';')* ) '}'
