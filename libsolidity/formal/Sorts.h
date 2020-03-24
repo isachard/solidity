@@ -15,6 +15,8 @@
 	along with solidity.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
 #include <liblangutil/Exceptions.h>
 #include <libsolutil/Common.h>
 #include <libsolutil/Exceptions.h>
