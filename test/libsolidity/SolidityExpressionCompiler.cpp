@@ -144,7 +144,7 @@ bytes compileFirstExpression(
 				RevertStrings::Default
 			);
 			context.resetVisitedNodes(contract);
-			context.setInheritanceHierarchy(inheritanceHierarchy);
+			context.setMostDerivedContract(*contract);
 			unsigned parametersSize = _localVariables.size(); // assume they are all one slot on the stack
 			context.adjustStackOffset(parametersSize);
 			for (vector<string> const& variable: _localVariables)
