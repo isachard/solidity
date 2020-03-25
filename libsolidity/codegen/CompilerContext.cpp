@@ -275,12 +275,16 @@ evmasm::AssemblyItem CompilerContext::functionEntryLabelIfExists(Declaration con
 FunctionDefinition const& CompilerContext::superFunction(FunctionDefinition const& _function, ContractDefinition const& _base)
 {
 	solAssert(m_mostDerivedContract, "No most derived contract set.");
-	return _function.resolveVirtual(mostDerivedContract(), superContract(_base));
+	ContractDefinition const* super = superContract(_base);
+	solAssert(super, "Super contract not available.");
+	return _function.resolveVirtual(mostDerivedContract(), super);
 }
 
 FunctionDefinition const* CompilerContext::nextConstructor(ContractDefinition const& _contract) const
 {
 	ContractDefinition const* next = superContract(_contract);
+	if (next == nullptr)
+		return nullptr;
 	for (ContractDefinition const* c: m_mostDerivedContract->annotation().linearizedBaseContracts)
 		if (next != nullptr && next != c)
 			continue;
@@ -540,11 +544,17 @@ LinkerObject const& CompilerContext::assembledObject() const
 
 ContractDefinition const* CompilerContext::superContract(ContractDefinition const& _contract) const
 {
-	solAssert(m_mostDerivedContract, "Most derived contract not set.");
-	auto const& hierarchy = m_mostDerivedContract->annotation().linearizedBaseContracts;
+	auto const& hierarchy = mostDerivedContract().annotation().linearizedBaseContracts;
 	auto it = find(hierarchy.begin(), hierarchy.end(), &_contract);
 	solAssert(it != hierarchy.end(), "Base not found in inheritance hierarchy.");
-	return *(++it);
+	++it;
+	if (it == hierarchy.end())
+		return nullptr;
+	else
+	{
+		solAssert(*it != &_contract, "");
+		return *it;
+	}
 }
 
 string CompilerContext::revertReasonIfDebug(string const& _message)

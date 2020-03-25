@@ -325,11 +325,11 @@ FunctionDefinition const& FunctionDefinition::resolveVirtual(
 ) const
 {
 	solAssert(!isConstructor(), "");
+	// If we are not doing super-lookup and the function is not virtual, we can stop here.
 	if (_searchStart == nullptr && !virtualSemantics())
 		return *this;
 
-	if (auto s = dynamic_cast<ContractDefinition const*>(scope()))
-		solAssert(!s->isLibrary(), "");
+	solAssert(!dynamic_cast<ContractDefinition const&>(*scope()).isLibrary(), "");
 
 	FunctionType const* functionType = TypeProvider::function(*this)->asCallableFunction(false);
 
@@ -367,11 +367,11 @@ ModifierDefinition const& ModifierDefinition::resolveVirtual(
 {
 	solAssert(_searchStart == nullptr, "Used super in connection with modifiers.");
 
+	// If we are not doing super-lookup and the modifier is not virtual, we can stop here.
 	if (_searchStart == nullptr && !virtualSemantics())
 		return *this;
 
-	if (auto s = dynamic_cast<ContractDefinition const*>(scope()))
-		solAssert(!s->isLibrary(), "");
+	solAssert(!dynamic_cast<ContractDefinition const&>(*scope()).isLibrary(), "");
 
 	for (ContractDefinition const* c: _mostDerivedContract.annotation().linearizedBaseContracts)
 	{

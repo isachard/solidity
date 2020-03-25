@@ -40,7 +40,7 @@ ContractDefinition const& IRGenerationContext::mostDerivedContract() const
 IRVariable const& IRGenerationContext::addLocalVariable(VariableDeclaration const& _varDecl)
 {
 	auto const& [it, didInsert] = m_localVariables.emplace(
-			std::make_pair(&_varDecl, IRVariable{_varDecl})
+		std::make_pair(&_varDecl, IRVariable{_varDecl})
 	);
 	solAssert(didInsert, "Local variable added multiple times.");
 	return it->second;

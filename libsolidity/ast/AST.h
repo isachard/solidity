@@ -689,6 +689,13 @@ public:
 
 	CallableDeclarationAnnotation& annotation() const override = 0;
 
+	/// Performs virtual or super function/modifier lookup:
+	/// If @a _searchStart is nullptr, performs virtual function lookup, i.e.
+	/// searches the inheritance hierarchy of @a _mostDerivedContract towards the base
+	/// and returns the first function/modifier definition that
+	/// is overwritten by this callable.
+	/// If @a _searchStart is non-null, starts searching only from that contract, but
+	/// still in the hierarchy of @a _mostDerivedContract.
 	virtual CallableDeclaration const& resolveVirtual(
 		ContractDefinition const& _mostDerivedContract,
 		ContractDefinition const* _searchStart = nullptr
