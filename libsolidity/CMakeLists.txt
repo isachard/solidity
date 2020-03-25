@@ -71,6 +71,8 @@ set(sources
 	codegen/LValue.h
 	codegen/MultiUseYulFunctionCollector.h
 	codegen/MultiUseYulFunctionCollector.cpp
+	codegen/ReturnInfoCollector.h
+	codegen/ReturnInfoCollector.cpp
 	codegen/YulUtilFunctions.h
 	codegen/YulUtilFunctions.cpp
 	codegen/ir/IRGenerator.cpp

@@ -21,6 +21,7 @@
 #pragma once
 
 #include <libsolidity/ast/ASTVisitor.h>
+#include <libsolidity/codegen/ReturnInfoCollector.h>
 #include <libsolidity/codegen/ir/IRLValue.h>
 #include <libsolidity/codegen/ir/IRVariable.h>
 
@@ -74,28 +75,6 @@ public:
 	bool visit(TryCatchClause const& _tryCatchClause) override;
 
 private:
-	/// Holds a set of properties of an external function call's return values.
-	struct ReturnInfo
-	{
-		/// Related function call this ReturnInfo was generated from.
-		std::reference_wrapper<FunctionCall const> functionCall;
-
-		/// Yul variable name, containing the decoded returned data for the related function call.
-		std::string returndataVariable;
-
-		/// Vector of TypePointer, for each return variable.
-		TypePointers returnTypes = {};
-
-		/// Boolean, indicating whether or not return size is only known at runtime.
-		bool dynamicReturnSize = false;
-
-		/// Contains the at compile time estimated return size.
-		unsigned estimatedReturnSize = 0;
-	};
-
-	/// Assembles some information about the return types and related.
-	[[nodiscard]] ReturnInfo collectReturnInfo(FunctionCall const& _functionCall);
-
 	/// @returns some Yul code to decode the return parameters of the current call.
 	std::string decodeReturnParameters();
 

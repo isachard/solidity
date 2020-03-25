@@ -19,6 +19,7 @@
  */
 
 #include <libsolidity/codegen/ir/IRGeneratorForStatements.h>
+#include <libsolidity/codegen/ReturnInfoCollector.h>
 
 #include <libsolidity/codegen/ABIFunctions.h>
 #include <libsolidity/codegen/ir/IRGenerationContext.h>
@@ -1231,47 +1232,6 @@ bool IRGeneratorForStatements::visit(Literal const& _literal)
 	return false;
 }
 
-IRGeneratorForStatements::ReturnInfo IRGeneratorForStatements::collectReturnInfo(FunctionCall const& _functionCall)
-{
-	FunctionType const& funType = dynamic_cast<FunctionType const&>(type(_functionCall.expression()));
-	FunctionType::Kind const funKind = funType.kind();
-	bool const returnSuccessConditionAndReturndata = funKind == FunctionType::Kind::BareCall || funKind == FunctionType::Kind::BareDelegateCall || funKind == FunctionType::Kind::BareStaticCall;
-	bool const haveReturndatacopy = m_context.evmVersion().supportsReturndata();
-
-	TypePointers returnTypes{};
-	bool dynamicReturnSize = false;
-	unsigned estimatedReturnSize = 0;
-
-	if (!returnSuccessConditionAndReturndata)
-	{
-		if (haveReturndatacopy)
-			returnTypes = funType.returnParameterTypes();
-		else
-			returnTypes = funType.returnParameterTypesWithoutDynamicTypes();
-
-		for (auto const& retType: returnTypes)
-			if (retType->isDynamicallyEncoded())
-			{
-				solAssert(haveReturndatacopy, "");
-				dynamicReturnSize = true;
-				estimatedReturnSize = 0;
-				break;
-			}
-			else if (retType->decodingType())
-				estimatedReturnSize += retType->decodingType()->calldataEncodedSize();
-			else
-				estimatedReturnSize += retType->calldataEncodedSize();
-	}
-
-	return ReturnInfo{
-		_functionCall,
-		m_context.newYulVariable(),
-		move(returnTypes),
-		dynamicReturnSize,
-		estimatedReturnSize
-	};
-}
-
 void IRGeneratorForStatements::appendExternalFunctionCall(
 	FunctionCall const& _functionCall,
 	vector<ASTPointer<Expression const>> const& _arguments
@@ -1291,7 +1251,8 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 	bool const isDelegateCall = funKind == FunctionType::Kind::BareDelegateCall || funKind == FunctionType::Kind::DelegateCall;
 	bool const useStaticCall = funKind == FunctionType::Kind::BareStaticCall || (funType.stateMutability() <= StateMutability::View && m_context.evmVersion().hasStaticCall());
 
-	m_returnInfo.emplace(collectReturnInfo(_functionCall));
+	auto returnInfoCollector = ReturnInfoCollector{m_context.evmVersion()};
+	m_returnInfo.emplace(returnInfoCollector.collect(_functionCall, m_context.newYulVariable()));
 
 	TypePointers argumentTypes;
 	vector<string> argumentStrings;
@@ -1745,6 +1706,7 @@ bool IRGeneratorForStatements::visit(TryStatement const& _tryStatement)
 
 	_tryStatement.externalCall().accept(*this);
 	solAssert(m_returnInfo.has_value(), "");
+	solAssert(m_returnInfo.value().functionCall == &_tryStatement.externalCall(), "");
 
 	auto const trySuccessCondition = m_context.trySuccessConditionVariable(_tryStatement.externalCall());
 
@@ -1767,6 +1729,7 @@ bool IRGeneratorForStatements::visit(TryStatement const& _tryStatement)
 string IRGeneratorForStatements::decodeReturnParameters()
 {
 	ABIFunctions abi(m_context.evmVersion(), m_context.revertStrings(), m_context.functionCollector());
+	solAssert(m_returnInfo.has_value() && m_returnInfo->functionCall != nullptr, "");
 
 	return Whiskers(R"(
 		<?dynamicReturnSize>
@@ -1780,7 +1743,7 @@ string IRGeneratorForStatements::decodeReturnParameters()
 		// decode return parameters from external try-call into <retVars>
 		let <retVars> := <abiDecode>(<pos>, add(<pos>, <returnSize>))
 	)")
-	("retVars", IRVariable(m_returnInfo->functionCall).commaSeparatedList())
+	("retVars", IRVariable(*m_returnInfo->functionCall).commaSeparatedList())
 	("pos", m_returnInfo->returndataVariable)
 	("abiDecode", abi.tupleDecoder(m_returnInfo->returnTypes, true))
 	("freeMemoryPointer", to_string(CompilerUtils::freeMemoryPointer))
@@ -1795,6 +1758,7 @@ string IRGeneratorForStatements::decodeReturnParameters()
 void IRGeneratorForStatements::decodeTryCallReturnParameters(TryCatchClause const& _successClause)
 {
 	solAssert(m_returnInfo.has_value(), "");
+	solAssert(m_returnInfo->functionCall != nullptr, "");
 	if (!_successClause.parameters())
 		return;
 
@@ -1808,7 +1772,7 @@ void IRGeneratorForStatements::decodeTryCallReturnParameters(TryCatchClause cons
 			solAssert(varDecl, "");
 			define(
 				m_context.addLocalVariable(*varDecl),
-				IRVariable(m_returnInfo->functionCall).tupleComponent(i++)
+				IRVariable(*m_returnInfo->functionCall).tupleComponent(i++)
 			);
 		}
 	}
@@ -1816,7 +1780,7 @@ void IRGeneratorForStatements::decodeTryCallReturnParameters(TryCatchClause cons
 	{
 		define(
 			m_context.addLocalVariable(*_successClause.parameters()->parameters().front()),
-			IRVariable(m_returnInfo->functionCall)
+			IRVariable(*m_returnInfo->functionCall)
 		);
 	}
 }
