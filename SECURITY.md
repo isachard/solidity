@@ -40,5 +40,13 @@ Please include steps to reproduce the bug you have found in as much detail as po
 Once we have received your bug report, we will try to reproduce it and provide a more detailed response.
 Once the reported bug has been successfully reproduced, the Solidity team will work on a fix.
 
+The Solidity team maintains the following JSON-formatted lists of patched security vulnerabilities:
+
+- [Summary of known security vulnerabilities][3]
+- [List of security vulnerabilities affecting a specific version of the compiler][4].
+
+
 [1]: https://bounty.ethereum.org/
 [2]: https://bounty.ethereum.org/#rules
+[3]: https://solidity.readthedocs.io/en/latest/bugs.html
+[4]: https://github.com/ethereum/solidity/blob/develop/docs/bugs_by_version.json
